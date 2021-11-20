@@ -39,10 +39,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
-      - name: Test
-        run: |
-          go test `go list ./... | grep -v internal`
-
       - name: Semantic Release
         id: semantic
         uses: go-semantic-release/action@v1
