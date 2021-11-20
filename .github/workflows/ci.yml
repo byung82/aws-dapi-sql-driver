@@ -41,6 +41,11 @@ jobs:
           role-session-name: AssetsUploadSession
 
       - name: Test
+        env:
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_TYPE: ${{ secrets.DB_TYPE }}
+          AWS_RESOURCE_ARN: ${{ secrets.AWS_RESOURCE_ARN }}
+          AWS_SECRET_ARN: ${{ secrets.AWS_SECRET_ARN }}
         run: |
           go test ./... -coverprofile=coverage.txt -covermode=atomic
 #      - name: Upload coverage report
