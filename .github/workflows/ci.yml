@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - beta
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: 소스체크아웃
+        run: |
+          echo "RELEASE_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+          echo "TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+      - uses: benjlevesque/short-sha@v1.2
+        id: short-sha
+        with:
+          length: 7
+
+      - name: Go 설치
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.17'
+
+      - name: Module Download
+        run: go mod download
+
+      - name: Test
+        run: |
+          go test `go list ./... | grep -v internal` -coverprofile=coverage.txt -covermode=atomic
+#      - name: Upload coverage report
+#        uses: codecov/codecov-action@v1.0.2
+#        with:
+#          token: ${{ secrets.CODECOV_TOKEN }}
+#          file: ./coverage.txt
+#          flags: unittests
+#          name: codecov-umbrella

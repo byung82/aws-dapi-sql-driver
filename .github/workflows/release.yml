@@ -1,0 +1,101 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - beta
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 소스체크아웃
+        uses: actions/checkout@v2
+      - uses: benjlevesque/short-sha@v1.2
+        id: short-sha
+        with:
+          length: 7
+
+      - name: Go 설치
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.17'
+
+      - uses: actions/cache@v2
+        with:
+          # In order:
+          # * Module download cache
+          # * Build cache (Linux)
+          # * Build cache (Mac)
+          # * Build cache (Windows)
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            %LocalAppData%\go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Test
+        run: |
+          go test `go list ./... | grep -v internal`
+
+      - name: Semantic Release
+        id: semantic
+        uses: go-semantic-release/action@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          changelog-generator-opt: "emojis=true"
+#        uses: cycjimmy/semantic-release-action@v2
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#        id: semantic
+#        with:
+#          semantic_version: 16
+#          extra_plugins: |
+#            @semantic-release/changelog
+#            @semantic-release/git
+#            conventional-changelog-eslint
+#          branches: |
+#            [
+#              'main',
+#              {
+#                name: "develop",
+#                prerelease: true,
+#              },
+#              {
+#                name: "beta",
+#                prerelease: true,
+#              },
+#            ]
+#      - name: Get branch name
+#        id: branch-name
+#        uses: tj-actions/branch-names@v5
+#
+#      - name: Build Date
+#        run: |
+#          echo "BUILD_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+#          echo "TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+#      - name: Semantic Release Output
+#        run: |
+#          echo ${{ steps.semantic.outputs.new_release_published }}
+#          echo ${{ steps.semantic.outputs.new_release_version }}
+#          echo ${{ steps.semantic.outputs.new_release_major_version }}
+#          echo ${{ steps.semantic.outputs.new_release_minor_version }}
+#          echo ${{ steps.semantic.outputs.new_release_patch_version }}
+#      - name: Deploy
+#        if: steps.semantic.outputs.new_release_published == 'true'
+#        uses: peter-evans/repository-dispatch@v1
+#        env:
+#          BRANCH: ${{ steps.branch-name.outputs.current_branch }}
+#          STAGE: ${{ steps.branch-name.outputs.current_branch }}
+#          TAG: ${{ steps.semantic.outputs.new_release_version }}
+#          SHA: ${{ github.sha }}
+#        with:
+#          token: ${{ secrets.DEPLOY_ACCESS_TOKEN }}
+#          repository: 'TouchConDevelop/touch-con-cognito-post-confirm-deploy'
+#          event-type: deploy
+#          client-payload: '{ "branch": "${{ env.BRANCH }}", "stage": "${{ env.STAGE }}", "sha": "${{ env.SHA }}", "tag": "v${{ env.TAG }}", "build_date": "${{ env.BUILD_DATE }}", "timestamp": "${{ env.TIMESTAMP }}" }'
