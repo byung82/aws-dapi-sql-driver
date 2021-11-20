@@ -29,6 +29,17 @@ jobs:
       - name: Module Download
         run: go mod download
 
+      - name: 아마존 인증
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-external-id: ${{ secrets.AWS_ROLE_EXTERNAL_ID }}
+          role-duration-seconds: 1200
+          role-session-name: AssetsUploadSession
+
       - name: Test
         run: |
           go test ./... -coverprofile=coverage.txt -covermode=atomic

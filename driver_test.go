@@ -13,10 +13,23 @@ import (
 
 func TestNewOpen(t *testing.T) {
 
-	sess, err := session.NewSession(&aws.Config{
-		Region:      aws.String(os.Getenv("AWS_REGION")),
-		Credentials: credentials.NewSharedCredentials("", os.Getenv("AWS_PROFILE")),
-	})
+	var sess *session.Session
+	var err error
+
+	if v, ok := os.LookupEnv("AWS_PROFILE"); ok {
+		sess, err = session.NewSession(&aws.Config{
+			Region:      aws.String(os.Getenv("AWS_REGION")),
+			Credentials: credentials.NewSharedCredentials("", v),
+		})
+	} else {
+		sess, err = session.NewSession(&aws.Config{
+			Region: aws.String(os.Getenv("AWS_REGION")),
+			Credentials: credentials.NewStaticCredentials(os.Getenv("AWS_ACCESS_KEY_ID"),
+				os.Getenv("AWS_SECRET_ACCESS_KEY"),
+				os.Getenv("AWS_SESSION_TOKEN"),
+			),
+		})
+	}
 
 	require.NoError(t, err)
 
